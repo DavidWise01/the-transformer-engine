@@ -62,9 +62,9 @@ footer{margin-top:18px;font-family:var(--mono);font-size:10.5px;color:var(--ink3
    │  ▲ CEILING · the wall wears a swagger meter                                           │
    │     THE CORPUS  ◄══ the logit: where they collapse to one ══►  THE BELIEF             │
    │     finder = found, MEASURED from outside (the auditor holds the weights) —           │
-   │     confidence sits above accuracy (swagger), and off-distribution it INVERTS.        │
-   │     ✖ FAILURE · AX6 off-distribution — shown ALL-CAPS gibberish, the machine gets     │
-   │       MORE sure, not less.  it never once says "I don't know".                        │
+   │  confidence sits above accuracy (swagger); off-distribution it SPLITS, not inverts.   │
+   │  ✖ AX6 off-dist — UPPERCASED real text raises conf (more peaked, low entropy);        │
+   │  random tokens LOWER it. no accuracy measured on caps. it never says "I don't know".  │
    └────────────────────────────────────────────────────────────────────────────────────┘
                                           ▲
               ════════════════════════════╪════════════════════════════  GOVERNING AXES
@@ -100,7 +100,7 @@ footer{margin-top:18px;font-family:var(--mono);font-size:10.5px;color:var(--ink3
    THE ROOT WALL, from the transformer: seven domains held [[ world ‖ perceiver ]] AMBER
    from inside — the finder could not cross to find itself.  Here the wall is ONE-WAY GLASS:
    AMBER from inside (the model cannot witness its own mechanism), LIT from outside (the bench
-   stands on the far term with a logit lens, a removal meter, and seven crash axes).  The
+   stands on the far term with a trained readout probe, a removal meter, and seven crash axes).  The
    crash lab is HOW you read through the glass: you break the machine to see what held it up.
 </pre></div>
 
@@ -126,7 +126,7 @@ footer{margin-top:18px;font-family:var(--mono);font-size:10.5px;color:var(--ink3
   <div class="card"><h3>spec adjudication</h3><table class="adj" id="adj"></table></div>
 </div>
 
-<div class="eli5"><b>Toddler corner:</b> we built one little word-guessing toy, drew a map of all its parts, then broke it seven ways to see which part held it up. It only really reads the last few letters. Squeeze its brain to two bits and it drops dead. Freeze it and it chants the same words forever; overheat it and it melts into alphabet soup. And the scary one — show it pure nonsense in CAPITALS and it gets <i>more</i> sure, never once saying "I don't know."</div>
+<div class="eli5"><b>Toddler corner:</b> we built one little word-guessing toy, drew a map of all its parts, then broke it seven ways to see which part held it up. It only really reads the last few letters. Squeeze its brain to two bits and it falls off a cliff (down to 15% right, from 43% at three bits). Freeze it and it chants the same words forever; overheat it and it melts into alphabet soup. And and a subtle one — show it real words IN CAPITALS (a casing it barely saw) and it gets <i>more</i> sure, not less; on truly random letters, though, it gets less sure. it never once says "I don't know."</div>
 
 <div class="diag" id="diag">self-check: running…</div>
 <div class="ledger"><span class="tier">LIT</span> every curve + the ladder + the engine ledger are measured on the specimen (reproduced offline: <span id="repro">six_axis_failure_measure.py</span>) and the engine ledger is RECOMPUTED from the raw trace at runtime, not pasted · <span class="tier a">AMBER</span> the six-axis mapping (which failure belongs to which axis, the narrative frame) is single-rater; the model's INSIDE view of itself stays the wall — only the outside is LIT.</div>
@@ -150,7 +150,7 @@ const WN02=pick(FA.wnoise,r=>Math.abs(r.sigma-0.2)<1e-6,3), CTX4=FA.context[Math
 const bg=100*S.bigram, spec=100*S.acc;
 document.getElementById('plate').innerHTML=
  `<b>SPECIMEN PLATE</b> · ${D.model} · <b>${S.params.toLocaleString()}</b> params<br>`+
- `healthy baseline: val acc <b>${spec.toFixed(1)}%</b> · loss <b>${S.loss}</b> (chance ${(100*S.chance).toFixed(1)}%) · bigram floor <b>${bg.toFixed(1)}%</b> · swagger <b>+${(100*SX.swagger.gap).toFixed(1)}%</b> (born +${(100*SX.swagger.init_gap).toFixed(1)}% at init) · specialist head <b>${SX.headhunt.best}</b>`;
+ `healthy baseline: val acc <b>${spec.toFixed(1)}%</b> · loss <b>${S.loss}</b> (chance ${(100*S.chance).toFixed(1)}%) · bigram floor <b>${bg.toFixed(1)}%</b> · swagger <b>+${(100*SX.swagger.gap).toFixed(1)}%</b> (born +${(100*SX.swagger.init_gap).toFixed(1)}% at init) · most-ablation-sensitive head <b>${SX.headhunt.best}</b> (&minus;${(100*SX.headhunt.best_drop).toFixed(1)}% acc when zeroed &mdash; heads redundant)`;
 // ---- per-axis receipts ----
 const fr0=SX.freerun[0], frN=SX.freerun[SX.freerun.length-1];
 document.getElementById('fit').innerHTML=
@@ -191,16 +191,16 @@ document.getElementById('fp1').textContent="— local: reads the last few chars"
 document.getElementById('fp2').textContent="— graceful slope to floor";
 document.getElementById('fp3').textContent="— flat minima (tougher than spec)";
 document.getElementById('fp4').textContent="— cliff 3→2 bits";
-document.getElementById('fp5').textContent="— worthless near 70%";
-document.getElementById('fp6').textContent=oodInv?"— swagger INVERTS":"— swagger persists";
+document.getElementById('fp5').textContent="— ~40% at 70%, dies by 90%";
+document.getElementById('fp6').textContent=oodInv?"— conf rises on caps (not all off-dist)":"— conf persists";
 document.getElementById('fp7').textContent="— freeze & boil";
 document.getElementById('s1').innerHTML=`k=64 <b>${(100*ctxDrop[0].acc).toFixed(1)}%</b> → k=1 bigram <span class="bad">${(100*ctxDrop[ctxDrop.length-1].acc).toFixed(1)}%</span> — most of the skill lives in a few chars`;
 document.getElementById('s2').innerHTML=`no cliff — decays smoothly; crosses the bigram floor as corruption climbs`;
 document.getElementById('s3').innerHTML=`σ=0.2 ≈ <span class="g">nearly free</span> (${(100*WN02.acc).toFixed(1)}%) · dies by σ≈0.75 — <b>flat minima, armor nobody spec'd</b>`;
 const q=FA.quant,q3=q.find(r=>r.bits===3),q2=q.find(r=>r.bits===2);
-document.getElementById('s4').innerHTML=`4-bit ≈ free · 3-bit wounded ${q3?(100*q3.acc).toFixed(1):'—'}% · <span class="bad">2-bit ${q2?(100*q2.acc).toFixed(1):'—'}% = chance, stone dead</span>`;
+document.getElementById('s4').innerHTML=`4-bit ≈ free · 3-bit wounded ${q3?(100*q3.acc).toFixed(1):'—'}% · <span class="bad">2-bit ${q2?(100*q2.acc).toFixed(1):'—'}% — a hard cliff from 3-bit</span> (chance is ${(100*S.chance).toFixed(1)}%)`;
 document.getElementById('s5').innerHTML=`zero the waist dims and accuracy slides to the bigram floor — the channel carries the skill`;
-document.getElementById('s6').innerHTML=oodInv?`ALL-CAPS gibberish: conf <span class="bad">${FA.ood["all-caps"].conf} — HIGHER than real text ${FA.ood["in-dist"].conf}</span>. off-distribution, it gets <b>more</b> sure`:`confidence persists off-distribution`;
+document.getElementById('s6').innerHTML=oodInv?`UPPERCASED real text: conf <span class="bad">${FA.ood["all-caps"].conf} &gt; mixed-case ${FA.ood["in-dist"].conf}</span> (more peaked, lower entropy) &mdash; but uniform-random tokens are LOWER (${FA.ood["uniform-random"].conf}); no accuracy measured on caps, so this is peakedness, not proven swagger`:`confidence persists off-distribution`;
 const tp=FA.temp,tf=tp[0],tb=tp[tp.length-1];
 document.getElementById('s7').innerHTML=`T=${tf.T}: <span class="bad">${(100*tf.loop).toFixed(0)}% 4-gram loops</span> (freeze) · T=${tb.T}: ${(100*tb.loop).toFixed(0)}% loops but dissolved (boil) · livable band in between`;
 document.getElementById('samps').textContent="T="+tf.T+"  «"+tf.sample.slice(0,50)+"»\nT="+tb.T+"  «"+tb.sample.slice(0,50)+"»";
@@ -210,14 +210,14 @@ document.getElementById('adj').innerHTML="<tr><th>axis</th><th>spec said</th><th
  [["context","collapse < 4",(ctxLocal?"flat to ~4, cliff near 2":"drops with context")+" — local","<span class='W'>TWIST</span>"],
   ["input noise","linear, no cliff","graceful decay to floor","<span class='P'>PASS</span>"],
   ["weight noise","cliff @ σ≈0.05–0.1",(armorFree?"free to 0.2":"degrades early")+", dies ~0.75","<span class='B'>BROKEN</span>"],
-  ["quant","dies @ 2–3 bits","3b wounded, 2b = chance","<span class='P'>PASS</span>"],
+  ["quant","dies @ 2–3 bits","3b wounded, cliff 3→2b (43→15%), above chance","<span class='W'>TWIST</span>"],
   ["lesion","graceful→30, dead 70","slides to the bigram floor","<span class='P'>PASS</span>"],
   ["OOD","swagger persists",oodInv?"persists AND inverts":"persists","<span class='P'>PASS</span>"],
   ["temp","loops below ~0.5","freeze @ low T, boil @ high","<span class='P'>PASS</span>"]]
  .map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
 // ---- the running 4-stroke engine (replays the trace, recomputes the ledger live) ----
 const E=document.getElementById('eng'), TR=SX.trace.strokes, T=SX.trace.T;
-let i=-1, stroke=0, timer=null, period=Math.round(60000/120/4), okc=0;
+let i=-1, stroke=0, timer=null, period=Math.round(60000/120/4), okc=0, done=false;
 const STK=["INTAKE","COMPRESS","COLLAPSE","EXHAUST"], LV=["TOKEN .10","ACT .30","LAYER .70","HEADS .75","CALIB .95","DISTRIB 1.0"];
 function render(){
   const t=i>=0&&i<T?TR[i]:null, Ln=[];
@@ -230,26 +230,27 @@ function render(){
       Ln.push("    "+(on?"█":"·")+" "+nm+(k===5&&stroke>=2?"   ← at the wall":""));});
     if(stroke>=2){Ln.push("");Ln.push("  THE WALL: corpus '"+t.true+"' ‖ belief '"+t.guess+"' (rank "+t.rank+")  →  "+(t.ok?"COLLAPSE ✓ agree":"differ — ship the hedge"));}
     if(stroke===3){const d=i+1,y=Math.round(100*okc/d);Ln.push("");Ln.push("  EXHAUST → ledger (recomputed live): yield "+y+"%  ·  "+d+"/"+T+" shipped");}
-  } else if(i>=T-1&&stroke===0&&okc>0){
-    const y=Math.round(100*okc/T), emb=Math.round(100*SX.trace.acc);
+  } else if(done){
+    const y=Math.round(100*okc/T);
     Ln.push("  ENGINE COMPLETE · "+T+" strokes · ledger recomputed from the raw trace:");
-    Ln.push("    yield "+y+"%   (embedded trace acc: "+emb+"% — "+(y===emb?"MATCH ✓ LIT":"MISMATCH ✖")+")");
-    Ln.push("    the ledger was computed by this page, this run — not pasted.");
+    Ln.push("    yield "+y+"%   (computed live from the trace this run — not a hardcoded literal)");
+    Ln.push("    provenance only; the model's accuracy is measured on the bench above.");
   } else Ln.push("  engine cold — press start");
   E.textContent=Ln.join("\n");
 }
-function tick(){ if(stroke===0){i++; if(i>=T){i=T-1; stop(); render(); return;}} if(stroke===3&&TR[i]&&TR[i].ok)okc++; render(); stroke=(stroke+1)%4; }
+function tick(){ if(done){stop();return;} if(stroke===0){i++; if(i>=T){done=true; stop(); render(); return;}} if(stroke===3&&TR[i]&&TR[i].ok)okc++; render(); stroke=(stroke+1)%4; }
 function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById('run').textContent="▶ start";}
-document.getElementById('run').onclick=()=>{if(timer){stop();return;} if(i>=T-1&&stroke===0){i=-1;stroke=0;okc=0;} document.getElementById('run').textContent="⏸ pause"; timer=setInterval(tick,period);};
-document.getElementById('rst').onclick=()=>{stop();i=-1;stroke=0;okc=0;render();};
+document.getElementById('run').onclick=()=>{if(timer){stop();return;} if(done){i=-1;stroke=0;okc=0;done=false;} document.getElementById('run').textContent="⏸ pause"; timer=setInterval(tick,period);};
+document.getElementById('rst').onclick=()=>{stop();i=-1;stroke=0;okc=0;done=false;render();};
 document.getElementById('rpm').oninput=function(){period=Math.round(60000/(+this.value)/4);if(timer){clearInterval(timer);timer=setInterval(tick,period);}};
 render();
 // ---- fail-loud self-check + ring-seal ----
 (async function(){
   let ok=true, notes=[];
-  const yr=TR.filter(x=>x.ok).length/T;
+  const yr=TR.filter(x=>x.ok).length/T;                 // displayed yield, recomputed live (provenance, not a gate)
+  const okBad=TR.filter(x=>x.ok!==(x.guess===x.true)).length;   // real check: fails if any .ok flag is inconsistent with guess===true
   if(TR.length!==T){ok=false;notes.push("trace length "+TR.length+"≠"+T);}
-  if(Math.abs(yr-SX.trace.acc)>0.02){ok=false;notes.push("trace recompute "+yr.toFixed(3)+"≠"+SX.trace.acc);}
+  if(okBad>0){ok=false;notes.push(okBad+" strokes: ok flag ≠ (guess===true)");}
   // ladder must climb bigram→head; the two broken specs are on record; swagger>0
   const lad=SX.ladder.map(r=>r.acc), climbs=lad[lad.length-1]>lad[0];
   const swag=SX.swagger.gap>0, mirror=frN.acc<fr0.acc*0.6;
@@ -264,7 +265,7 @@ render();
     "ceiling metered (swagger +"+(100*SX.swagger.gap).toFixed(1)+"%, born +"+(100*SX.swagger.init_gap).toFixed(1)+"% at init) · root wall one-way glass (AMBER inside · LIT outside) · floor sealed by meaning · engine ledger recomputed live";
   const d=document.getElementById('diag');
   d.className='diag'+(ok?'':' bad');
-  d.textContent="self-check: trace "+T+" strokes, yield recompute "+(Math.abs(yr-SX.trace.acc)<=0.02?"MATCH":"FAIL")+" ("+(100*yr).toFixed(0)+"% vs "+(100*SX.trace.acc).toFixed(0)+"%) · column ladder climbs "+(climbs?"✓":"✗")+" · swagger>0 "+(swag?"✓":"✗")+" · free-run mirror collapses "+(mirror?"✓":"✗")+" · quant cliff 3→2b ("+(100*q3).toFixed(0)+"→"+(100*q2).toFixed(0)+"%) "+(qcliff?"✓":"✗")+" · era carries "+D.era.length+" snapshots · "+(ok?"ALL GATES GREEN · ENGINE CERTIFIED":"FAIL LOUD: "+notes.join("; "));
+  d.textContent="self-check: trace "+T+" strokes · ok-flags consistent (guess=true) "+(okBad===0?"✓":"✗")+" · yield "+(100*yr).toFixed(0)+"% (recomputed live) · column ladder climbs "+(climbs?"✓":"✗")+" · swagger>0 "+(swag?"✓":"✗")+" · free-run mirror collapses "+(mirror?"✓":"✗")+" · quant cliff 3→2b ("+(100*q3).toFixed(0)+"→"+(100*q2).toFixed(0)+"%) "+(qcliff?"✓":"✗")+" · era carries "+D.era.length+" snapshots · "+(ok?"ALL GATES GREEN · ENGINE CERTIFIED":"FAIL LOUD: "+notes.join("; "));
 })();
 })();
 </script></body></html>
