@@ -1,0 +1,9 @@
+ROOT0-DLW-CHAIN-v1
+index : 1420
+slug  : the-transformer-engine
+seal  : dbd17a7cb556378b25ae0e9709dffdd22e0587ce8ccf9b568a2d23c4ba2e5f44
+prev  : a4675dfecb43dc9f2a508a6cb058b4a81292823552b39f970e9454d381a8dd14
+link  : 9ade70fb6c13306e1ee78c279f35c7473cb57fa5769b448fac79944b9e1c4abd
+head  : 108db3d019bc196328dbbd3b957e87db635ec5eef39e5cd08e10a67c270a71ef
+
+— the tether: link = sha256(index|slug|seal|prev). the chain head commits to the whole corpus.
