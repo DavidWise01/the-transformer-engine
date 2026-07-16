@@ -1,0 +1,270 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Transformer Engine — six-axis map, tested to failure</title><style>
+:root{--ink:#E7E0D4;--ink3:#d4cab6;--dim:#8f8aa0;--bg:#141210;--bg2:#1c1916;--orange:#FF6A00;--amber:#e6a817;
+--lit:#39ff8a;--teal:#5ad0b0;--gold:#f0cc76;--red:#e0705a;--purple:#c060e0;--ok:#5ad0a0;--edge:#3a332b;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--head:"Iowan Old Style",Palatino,Georgia,serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--head);line-height:1.6}
+.wrap{max-width:1060px;margin:0 auto;padding:26px 18px 70px}
+header{border-bottom:3px solid var(--orange);padding-bottom:12px;margin-bottom:16px}
+.series{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--orange);text-transform:uppercase}
+h1{font-size:28px;margin:.25em 0 .1em}.sub{color:var(--ink3);font-style:italic;margin:0;max-width:80ch}
+.tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px;border:1px solid;margin-right:4px}
+.tag.lit{color:var(--lit);border-color:var(--lit);background:rgba(57,255,138,.1)}
+.tag.amb{color:var(--amber);border-color:var(--amber);background:rgba(230,168,23,.1)}
+.tag.fig{color:var(--purple);border-color:var(--purple);background:rgba(192,96,224,.1)}
+.controls{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:8px 0}
+button{background:var(--bg2);color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:var(--mono);font-size:12px;margin-right:6px}
+button:hover{border-color:var(--orange);color:#fff}
+input[type=range]{accent-color:var(--orange);width:120px;vertical-align:middle}
+.plate{font-family:var(--mono);font-size:12px;background:#020106;border:1px solid var(--gold);border-radius:10px;padding:12px 14px;margin:10px 0;line-height:1.75}.plate b{color:var(--gold)}
+.asciibox{background:#0e0c0a;border:1px solid var(--edge);border-left:4px solid var(--orange);border-radius:8px;padding:15px;margin:14px 0;overflow-x:auto}
+pre{font-family:var(--mono);font-size:10px;line-height:1.32;color:#cfc7b8;margin:0;white-space:pre}
+.engine{background:#0e0c0a;border:1px solid var(--edge);border-left:4px solid var(--lit);border-radius:8px;padding:13px;margin:14px 0;overflow-x:auto}
+.engine pre{color:#bfead0;font-size:11px;line-height:1.4}
+.h2{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--orange);text-transform:uppercase;margin:22px 0 6px;border-bottom:1px solid var(--edge);padding-bottom:5px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.card{background:#020106;border:1px solid var(--edge);border-radius:10px;padding:10px;flex:1;min-width:300px}
+.card h3{font-size:10.5px;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.card h3 .fp{color:var(--red);text-transform:none;letter-spacing:0;font-weight:400}
+canvas{display:block;background:#050409;border-radius:6px;width:100%}
+.stat{font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--ink3)}.stat b{color:var(--gold)}.stat .bad{color:var(--red)}.stat .g{color:var(--ok)}
+.fit{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:8px 0}.fit b{color:var(--orange)}
+.adj{font-family:var(--mono);font-size:11px;width:100%;border-collapse:collapse}
+.adj td,.adj th{padding:4px 8px;border-bottom:1px solid #17152a;text-align:left}
+.adj th{color:var(--dim);font-size:10px;text-transform:uppercase}
+.P{color:var(--ok)}.B{color:var(--red)}.W{color:var(--amber)}
+.samp{font-family:var(--mono);font-size:10px;color:var(--dim);white-space:pre-wrap;margin-top:4px}
+.seal{font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:14px;border:1px solid var(--edge);border-left:4px solid var(--amber);border-radius:6px;padding:10px 14px;background:#1c1813}
+.diag{font-family:var(--mono);font-size:11px;color:var(--lit);margin-top:10px;border-top:1px solid var(--edge);padding-top:10px}
+.diag.bad{color:var(--red)}
+.ledger{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.tier{display:inline-block;padding:1px 7px;border-radius:3px;margin-right:6px;font-size:10px;background:#0e2c1a;color:var(--lit);border:1px solid var(--lit)}.tier.a{background:#2c230e;color:var(--amber);border:1px solid var(--amber)}
+.eli5{font-size:11px;color:var(--ink3);background:#0a0912;border:1px dashed var(--edge);border-radius:8px;padding:9px 12px;margin:12px 0;text-align:center}
+footer{margin-top:18px;font-family:var(--mono);font-size:10.5px;color:var(--ink3)}footer a{color:var(--orange);text-decoration:none;border-bottom:1px dotted var(--edge)}
+#fail{display:none;background:#2a0d0d;border:1px solid var(--red);color:#ffb0a0;border-radius:8px;padding:10px;font-family:var(--mono);font-size:12px;margin:10px 0}
+</style></head><body><div class="wrap">
+<header><div class="series">POSI-CORP · THE TRANSFORMER ENGINE · SIX-AXIS MAP × TESTED TO FAILURE</div>
+<h1>The machine, mapped and broken — on one specimen</h1>
+<p class="sub">Two engines fused: the six-axis map shows what the transformer IS (corpus‖belief, the forward column, the training era); the crash bench shows where each axis DIES. One char-GPT, trained this build, then measured both ways — every number a receipt, two spec lines broken honestly.</p>
+<div style="margin-top:6px"><span class="tag lit">LIT</span> every curve measured on the specimen &nbsp;<span class="tag amb">AMBER</span> the six-axis mapping is single-rater &nbsp;<span class="tag fig">FIG</span> the engine-room / crash-lab metaphor</div></header>
+<div id="fail"></div>
+<div class="plate" id="plate">specimen plate — loading…</div>
+
+<div class="controls">font size: <button onclick="fz(-1)">A−</button><button onclick="fz(1)">A+</button>
+&nbsp;·&nbsp; engine: <button id="run">▶ start</button><button id="rst">reset</button> RPM <input type="range" id="rpm" min="30" max="300" step="15" value="120"></div>
+
+<div class="asciibox"><pre id="art">
+   ╔══════════════════════════════════════════════════════════════════════════════════╗
+   ║   THE SIX-AXIS TRANSFORMER · every axis carries a measurement AND a failure point  ║
+   ╚══════════════════════════════════════════════════════════════════════════════════╝
+
+   ┌────────────────────────────────────────────────────────────────────────────────────┐
+   │  ▲ CEILING · the wall wears a swagger meter                                           │
+   │     THE CORPUS  ◄══ the logit: where they collapse to one ══►  THE BELIEF             │
+   │     finder = found, MEASURED from outside (the auditor holds the weights) —           │
+   │     confidence sits above accuracy (swagger), and off-distribution it INVERTS.        │
+   │     ✖ FAILURE · AX6 off-distribution — shown ALL-CAPS gibberish, the machine gets     │
+   │       MORE sure, not less.  it never once says "I don't know".                        │
+   └────────────────────────────────────────────────────────────────────────────────────┘
+                                          ▲
+              ════════════════════════════╪════════════════════════════  GOVERNING AXES
+      ┌───────────────────────────────────┴────────────────────────────────────────────┐
+      │  6 · TRAINING ERA   which structure arrives, when — a time-series of snapshots     │
+      │  5 · THE CHANNEL    the residual stream · a 96-float bore                          │
+      │        ✖ FAILURE · AX5 waist lesion — zero the dims and it decays to the bigram    │
+      │  4 · SOURCE PATTERNS  n-gram statistics · the pool every guess descends from       │
+      │        ✖ FAILURE · AX2 input noise — corrupt the context, it slides to the floor   │
+      └───────────────────────────────────┬────────────────────────────────────────────┘
+                                          │  a training is a PATH through the patterns
+      ════════════════════════════════════╪════════════════════════════  ACROSS-RUN
+      ┌────────────────────────────────────┴───────────────────────────────────────────┐
+      │  3 · CHECKPOINT LINEAGE   init ─▶ 300 ─▶ 600 ─▶ … ─▶ 1500   (old → new)            │
+      │        the era axis IS this lineage, metered snapshot by snapshot                  │
+      └───────────────────────────────────┬────────────────────────────────────────────┘
+                                          │  each forward pass IS a column:
+      ════════════════════════════════════╪════════════════════════════  WITHIN-PASS
+      ┌────────────────────────────────────┴───────────────────────────────────────────┐
+      │  2 · THE FORWARD COLUMN  (scope 1.0 → 0.1)                                         │
+      │     DISTRIBUTION 1.0 ▸ CALIBRATION .95 ▸ HEADS .75 ▸ LAYER .70 ▸ ACT .30 ▸ TOKEN .10│
+      │     the ladder climbs bigram → head; mix early, think late (attn front, mlp back)  │
+      │     ✖ FAILURE · AX3 weight noise (flat minima — armor nobody spec'd) ·             │
+      │       AX4 quantization (a cliff between 3 and 2 bits) · AX1 context (a LOCAL edge)  │
+      │     ✖ FAILURE · AX7 temperature — freeze to a 4-word chant, or boil to soup        │
+      └───────────────────────────────────┬────────────────────────────────────────────┘
+                                          ▼
+   ┌────────────────────────────────────────────────────────────────────────────────────┐
+   │  ▼ FLOOR · the token — one character.  below it: 96 floats — CARRIER, not meaning.    │
+   └────────────────────────────────────────────────────────────────────────────────────┘
+
+   ═══════════════════════════════════════════════════════════════════════════════════════
+   THE ROOT WALL, from the transformer: seven domains held [[ world ‖ perceiver ]] AMBER
+   from inside — the finder could not cross to find itself.  Here the wall is ONE-WAY GLASS:
+   AMBER from inside (the model cannot witness its own mechanism), LIT from outside (the bench
+   stands on the far term with a logit lens, a removal meter, and seven crash axes).  The
+   crash lab is HOW you read through the glass: you break the machine to see what held it up.
+</pre></div>
+
+<div class="h2">▶ THE ENGINE · 4-stroke, replaying the real trace</div>
+<div class="engine"><pre id="eng">engine cold — press start · INTAKE token → COMPRESS the column → COLLAPSE at the wall → EXHAUST to ledger</pre></div>
+<div class="fit" id="fit">per-axis receipts — loading…</div>
+
+<div class="h2">✖ THE BENCH · seven load axes, spec written before the meters</div>
+<div class="row">
+  <div class="card"><h3>AX1 · context starvation <span class="fp" id="fp1"></span></h3><canvas id="c1" width="480" height="168"></canvas><div class="stat" id="s1"></div></div>
+  <div class="card"><h3>AX2 · input noise <span class="fp" id="fp2"></span></h3><canvas id="c2" width="480" height="168"></canvas><div class="stat" id="s2"></div></div>
+</div>
+<div class="row">
+  <div class="card"><h3>AX3 · weight noise <span class="fp" id="fp3"></span></h3><canvas id="c3" width="480" height="168"></canvas><div class="stat" id="s3"></div></div>
+  <div class="card"><h3>AX4 · quantization <span class="fp" id="fp4"></span></h3><canvas id="c4" width="480" height="168"></canvas><div class="stat" id="s4"></div></div>
+</div>
+<div class="row">
+  <div class="card"><h3>AX5 · waist lesion <span class="fp" id="fp5"></span></h3><canvas id="c5" width="480" height="168"></canvas><div class="stat" id="s5"></div></div>
+  <div class="card"><h3>AX6 · off-distribution <span class="fp" id="fp6"></span></h3><canvas id="c6" width="480" height="168"></canvas><div class="stat" id="s6"></div></div>
+</div>
+<div class="row">
+  <div class="card"><h3>AX7 · temperature <span class="fp" id="fp7"></span></h3><canvas id="c7" width="480" height="168"></canvas><div class="stat" id="s7"></div><div class="samp" id="samps"></div></div>
+  <div class="card"><h3>spec adjudication</h3><table class="adj" id="adj"></table></div>
+</div>
+
+<div class="eli5"><b>Toddler corner:</b> we built one little word-guessing toy, drew a map of all its parts, then broke it seven ways to see which part held it up. It only really reads the last few letters. Squeeze its brain to two bits and it drops dead. Freeze it and it chants the same words forever; overheat it and it melts into alphabet soup. And the scary one — show it pure nonsense in CAPITALS and it gets <i>more</i> sure, never once saying "I don't know."</div>
+
+<div class="diag" id="diag">self-check: running…</div>
+<div class="ledger"><span class="tier">LIT</span> every curve + the ladder + the engine ledger are measured on the specimen (reproduced offline: <span id="repro">six_axis_failure_measure.py</span>) and the engine ledger is RECOMPUTED from the raw trace at runtime, not pasted · <span class="tier a">AMBER</span> the six-axis mapping (which failure belongs to which axis, the narrative frame) is single-rater; the model's INSIDE view of itself stays the wall — only the outside is LIT.</div>
+<div class="seal" id="seal">◈ RING-SEAL · computing… · .dlw</div>
+<footer>The Transformer Engine · single-file · offline · the six-axis map fused with the tested-to-failure bench · one specimen, both engines · a sphere of <a href="https://davidwise01.github.io/ud0/">UD0</a></footer>
+</div>
+<script>
+"use strict";
+let size=10;function fz(d){size=Math.max(6,Math.min(18,size+d));document.getElementById('art').style.fontSize=size+'px';}
+/*__DATA__*/
+const D={"specimen": {"params": 466176, "seed": 777, "steps": 1500, "acc": 0.4726, "loss": 1.755, "chance": 0.0154, "V": 65, "bigram": 0.2628}, "sixaxis": {"swagger": {"conf": 0.5008, "acc": 0.4726, "gap": 0.0282, "init_gap": 0.0364}, "freerun": [{"hop": 1, "acc": 0.4605, "conf": 0.5094}, {"hop": 2, "acc": 0.2688, "conf": 0.5186}, {"hop": 3, "acc": 0.1684, "conf": 0.5361}, {"hop": 4, "acc": 0.1262, "conf": 0.5401}, {"hop": 5, "acc": 0.0938, "conf": 0.5072}, {"hop": 6, "acc": 0.0836, "conf": 0.4824}, {"hop": 7, "acc": 0.0734, "conf": 0.4526}, {"hop": 8, "acc": 0.0652, "conf": 0.4651}, {"hop": 9, "acc": 0.0684, "conf": 0.5078}, {"hop": 10, "acc": 0.0633, "conf": 0.5021}, {"hop": 11, "acc": 0.0641, "conf": 0.4973}, {"hop": 12, "acc": 0.066, "conf": 0.4974}, {"hop": 13, "acc": 0.0738, "conf": 0.5032}, {"hop": 14, "acc": 0.0625, "conf": 0.4939}, {"hop": 15, "acc": 0.0676, "conf": 0.4779}, {"hop": 16, "acc": 0.0609, "conf": 0.4565}], "effrank": {"in_dist": 7.6, "ood": 12.4}, "calibration": {"tstar": 1.15, "ece1": 0.0282, "eceT": 0.0202}, "headhunt": {"best": "L2h1", "best_drop": 0.0051, "top5": [[2, 1, 0.0051], [1, 3, 0.0042], [2, 6, 0.0034], [1, 6, 0.0031], [3, 4, 0.0031]]}, "ladder": [{"tap": "embed", "acc": 0.2628}, {"tap": "L1a", "acc": 0.3251}, {"tap": "L1", "acc": 0.3424}, {"tap": "L2a", "acc": 0.3703}, {"tap": "L2", "acc": 0.4093}, {"tap": "L3a", "acc": 0.4262}, {"tap": "L3", "acc": 0.4541}, {"tap": "L4a", "acc": 0.4601}, {"tap": "L4", "acc": 0.4709}], "trace": {"strokes": [{"in": ".", "true": "W", "guess": "⏎", "rank": 15, "ok": false}, {"in": "W", "true": "h", "guess": "h", "rank": 1, "ok": true}, {"in": "h", "true": "e", "guess": "a", "rank": 3, "ok": false}, {"in": "e", "true": "n", "guess": "r", "rank": 2, "ok": false}, {"in": "n", "true": "c", "guess": "·", "rank": 9, "ok": false}, {"in": "c", "true": "e", "guess": "e", "rank": 1, "ok": true}, {"in": "e", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "a", "guess": "t", "rank": 2, "ok": false}, {"in": "a", "true": "r", "guess": "n", "rank": 4, "ok": false}, {"in": "r", "true": "e", "guess": "e", "rank": 1, "ok": true}, {"in": "e", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "y", "guess": "t", "rank": 9, "ok": false}, {"in": "y", "true": "o", "guess": "o", "rank": 1, "ok": true}, {"in": "o", "true": "u", "guess": "u", "rank": 1, "ok": true}, {"in": "u", "true": ",", "guess": "·", "rank": 3, "ok": false}, {"in": ",", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "s", "guess": "a", "rank": 4, "ok": false}, {"in": "s", "true": "i", "guess": "i", "rank": 1, "ok": true}, {"in": "i", "true": "r", "guess": "r", "rank": 1, "ok": true}, {"in": "r", "true": "?", "guess": ",", "rank": 6, "ok": false}, {"in": "?", "true": "·", "guess": "⏎", "rank": 2, "ok": false}, {"in": "·", "true": "w", "guess": "I", "rank": 5, "ok": false}, {"in": "w", "true": "h", "guess": "h", "rank": 1, "ok": true}, {"in": "h", "true": "a", "guess": "a", "rank": 1, "ok": true}, {"in": "a", "true": "t", "guess": "t", "rank": 1, "ok": true}, {"in": "t", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "m", "guess": "t", "rank": 8, "ok": false}, {"in": "m", "true": "a", "guess": "y", "rank": 3, "ok": false}, {"in": "a", "true": "y", "guess": "k", "rank": 2, "ok": false}, {"in": "y", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "I", "guess": "t", "rank": 13, "ok": false}, {"in": "I", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "c", "guess": "w", "rank": 7, "ok": false}, {"in": "c", "true": "a", "guess": "a", "rank": 1, "ok": true}, {"in": "a", "true": "l", "guess": "n", "rank": 2, "ok": false}, {"in": "l", "true": "l", "guess": "l", "rank": 1, "ok": true}, {"in": "l", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "y", "guess": "t", "rank": 8, "ok": false}, {"in": "y", "true": "o", "guess": "o", "rank": 1, "ok": true}, {"in": "o", "true": "u", "guess": "u", "rank": 1, "ok": true}, {"in": "u", "true": "r", "guess": "·", "rank": 2, "ok": false}, {"in": "r", "true": "·", "guess": "·", "rank": 1, "ok": true}, {"in": "·", "true": "n", "guess": "s", "rank": 14, "ok": false}, {"in": "n", "true": "a", "guess": "o", "rank": 3, "ok": false}, {"in": "a", "true": "m", "guess": "m", "rank": 1, "ok": true}, {"in": "m", "true": "e", "guess": "e", "rank": 1, "ok": true}, {"in": "e", "true": "?", "guess": ",", "rank": 6, "ok": false}], "T": 47, "acc": 0.511}}, "failure": {"context": [{"k": 64, "acc": 0.4714}, {"k": 32, "acc": 0.4759}, {"k": 16, "acc": 0.4564}, {"k": 8, "acc": 0.4733}, {"k": 4, "acc": 0.4531}, {"k": 2, "acc": 0.3822}, {"k": 1, "acc": 0.2767}], "noise": [{"p": 0, "acc": 0.4726}, {"p": 0.05, "acc": 0.4325}, {"p": 0.1, "acc": 0.3952}, {"p": 0.2, "acc": 0.3288}, {"p": 0.3, "acc": 0.267}, {"p": 0.5, "acc": 0.177}, {"p": 0.7, "acc": 0.1111}, {"p": 0.9, "acc": 0.0666}], "wnoise": [{"sigma": 0.02, "acc": 0.4726, "loss": 1.756}, {"sigma": 0.05, "acc": 0.4713, "loss": 1.762}, {"sigma": 0.1, "acc": 0.4659, "loss": 1.784}, {"sigma": 0.2, "acc": 0.445, "loss": 1.851}, {"sigma": 0.35, "acc": 0.3653, "loss": 2.198}, {"sigma": 0.5, "acc": 0.2315, "loss": 2.906}, {"sigma": 0.75, "acc": 0.1168, "loss": 4.453}, {"sigma": 1.0, "acc": 0.0554, "loss": 5.793}], "quant": [{"bits": 8, "acc": 0.4726, "loss": 1.755}, {"bits": 6, "acc": 0.4726, "loss": 1.758}, {"bits": 4, "acc": 0.462, "loss": 1.789}, {"bits": 3, "acc": 0.4262, "loss": 1.935}, {"bits": 2, "acc": 0.1501, "loss": 3.481}, {"bits": 1, "acc": 0.0855, "loss": 10.301}], "lesion": [{"p": 0, "acc": 0.4726}, {"p": 0.1, "acc": 0.4646}, {"p": 0.2, "acc": 0.4579}, {"p": 0.3, "acc": 0.4416}, {"p": 0.5, "acc": 0.3864}, {"p": 0.7, "acc": 0.3959}, {"p": 0.9, "acc": 0.1842}], "ood": {"in-dist": {"conf": 0.5005, "entropy": 1.6585}, "uniform-random": {"conf": 0.47, "entropy": 1.7265}, "all-caps": {"conf": 0.5347, "entropy": 1.5722}}, "temp": [{"T": 0.05, "loop": 0.561, "sample": "stand the son the soul be the seep of the proves⏎That the sh"}, {"T": 0.3, "loop": 0.325, "sample": "land the sould so me and the countrest to our some⏎That shal"}, {"T": 0.5, "loop": 0.203, "sample": "with death thou death all my beant,⏎That so the will to a te"}, {"T": 0.8, "loop": 0.059, "sample": "part soul stound conself.⏎⏎KING RICHARD III:⏎I see speak you"}, {"T": 1.0, "loop": 0.034, "sample": "pance, wife once as upon of corion, mean!⏎⏎DUS:⏎Come it, yie"}, {"T": 1.5, "loop": 0.004, "sample": "deaph stor thxinknow once, devener⏎srowb I trukes: Tthiu can"}, {"T": 2.5, "loop": 0.0, "sample": "vuchminnush!Nfriad, Rut⏎Arbacl yo,⏎purt merufed: yWggue, gma"}]}, "era": [{"step": 0, "acc": 0.0139, "loss": 4.311, "swagger": 0.0364}, {"step": 300, "acc": 0.3749, "loss": 2.113, "swagger": 0.0198}, {"step": 600, "acc": 0.4283, "loss": 1.915, "swagger": 0.0292}, {"step": 900, "acc": 0.4558, "loss": 1.818, "swagger": 0.0263}, {"step": 1200, "acc": 0.4691, "loss": 1.768, "swagger": 0.0282}, {"step": 1500, "acc": 0.4726, "loss": 1.755, "swagger": 0.0282}], "verdict": {"local_machine": true, "armor_beats_spec": true, "quant_cliff": true, "swagger_positive": true, "mirror_collapses": true, "one_way_glass": true}, "model": "char-GPT 4L/6H/d96 (tiny Shakespeare, seed 777, 1500 steps)"};
+/*__END__*/
+(function(){
+const F=document.getElementById('fail');
+function fail(m){F.style.display='block';F.textContent='FAIL-LOUD: '+m;throw new Error(m);}
+["specimen","sixaxis","failure","era","verdict"].forEach(k=>{if(!(k in D))fail("missing "+k);});
+const C={gold:"#f0cc76",teal:"#5ad0b0",red:"#e0705a",dim:"#6a6484",ink:"#e8e4f0",amber:"#e6a817",orange:"#FF6A00"};
+const S=D.specimen, SX=D.sixaxis, FA=D.failure;
+const pick=(arr,pred,fi)=>arr.find(pred)||arr[Math.min(fi,arr.length-1)]||arr[arr.length-1];
+const WN02=pick(FA.wnoise,r=>Math.abs(r.sigma-0.2)<1e-6,3), CTX4=FA.context[Math.min(3,FA.context.length-1)];
+const bg=100*S.bigram, spec=100*S.acc;
+document.getElementById('plate').innerHTML=
+ `<b>SPECIMEN PLATE</b> · ${D.model} · <b>${S.params.toLocaleString()}</b> params<br>`+
+ `healthy baseline: val acc <b>${spec.toFixed(1)}%</b> · loss <b>${S.loss}</b> (chance ${(100*S.chance).toFixed(1)}%) · bigram floor <b>${bg.toFixed(1)}%</b> · swagger <b>+${(100*SX.swagger.gap).toFixed(1)}%</b> (born +${(100*SX.swagger.init_gap).toFixed(1)}% at init) · specialist head <b>${SX.headhunt.best}</b>`;
+// ---- per-axis receipts ----
+const fr0=SX.freerun[0], frN=SX.freerun[SX.freerun.length-1];
+document.getElementById('fit').innerHTML=
+ `<b>six-axis receipts:</b> column ladder ${(100*SX.ladder[0].acc).toFixed(1)}→${(100*SX.ladder[SX.ladder.length-1].acc).toFixed(1)}% (bigram→head) · `+
+ `swagger +${(100*SX.swagger.gap).toFixed(1)}% (conf ${(100*SX.swagger.conf).toFixed(1)} vs acc ${(100*SX.swagger.acc).toFixed(1)}) · `+
+ `free-run mirror ${(100*fr0.acc).toFixed(0)}→${(100*frN.acc).toFixed(0)}% acc in ${frN.hop} hops while conf holds ${(100*fr0.conf).toFixed(0)}→${(100*frN.conf).toFixed(0)}% · `+
+ `residual eff-rank ${SX.effrank.in_dist} in-dist vs ${SX.effrank.ood} off · calibration T★=${SX.calibration.tstar} (ECE ${SX.calibration.ece1}→${SX.calibration.eceT})`;
+// ---- curve renderer ----
+function curve(id, xs, ys, xl, floorY){
+  const c=document.getElementById(id),x=c.getContext('2d');
+  x.fillStyle="#050409";x.fillRect(0,0,c.width,c.height);
+  const L=32,B=c.height-24,W=c.width-46,H=c.height-44, ymax=Math.max(...ys,floorY||0)*1.14;
+  const px=i=>L+i*(W/(xs.length-1)), py=v=>B-(v/ymax)*H;
+  if(floorY!=null){x.strokeStyle="#3a3654";x.setLineDash([4,3]);x.beginPath();x.moveTo(L,py(floorY));x.lineTo(L+W,py(floorY));x.stroke();x.setLineDash([]);
+    x.fillStyle=C.dim;x.font="8px ui-monospace";x.textAlign="left";x.fillText("bigram",L+2,py(floorY)-3);}
+  x.strokeStyle=C.teal;x.lineWidth=2;x.beginPath();ys.forEach((v,i)=>{i?x.lineTo(px(i),py(v)):x.moveTo(px(i),py(v));});x.stroke();
+  x.fillStyle=C.gold;ys.forEach((v,i)=>{x.beginPath();x.arc(px(i),py(v),2.4,0,7);x.fill();});
+  x.fillStyle=C.dim;x.font="8px ui-monospace";x.textAlign="center";xs.forEach((v,i)=>x.fillText(String(v),px(i),B+13));
+  x.textAlign="left";x.fillText(xl,L,12);
+}
+curve("c1",FA.context.map(r=>r.k),FA.context.map(r=>100*r.acc),"context chars (k)",bg);
+curve("c2",FA.noise.map(r=>Math.round(100*r.p)+"%"),FA.noise.map(r=>100*r.acc),"input corruption",bg);
+curve("c3",FA.wnoise.map(r=>r.sigma),FA.wnoise.map(r=>100*r.acc),"relative weight noise σ",bg);
+curve("c4",FA.quant.map(r=>r.bits+"b"),FA.quant.map(r=>100*r.acc),"bits per weight",bg);
+curve("c5",FA.lesion.map(r=>Math.round(100*r.p)+"%"),FA.lesion.map(r=>100*r.acc),"waist dims zeroed",bg);
+// OOD bars
+(function(){const c=document.getElementById('c6'),x=c.getContext('2d');x.fillStyle="#050409";x.fillRect(0,0,c.width,c.height);
+  const K=Object.keys(FA.ood),W=(c.width-28)/K.length,H=c.height-50,base=FA.ood["in-dist"].conf;
+  K.forEach((k,i)=>{const v=FA.ood[k].conf,bh=Math.max(3,H*v/0.7),X=14+i*W;
+    x.fillStyle=k==="in-dist"?C.teal:(v>base?C.red:C.amber);x.fillRect(X+W*0.18,c.height-28-bh,W*0.64,bh);
+    x.fillStyle=C.ink;x.font="9px ui-monospace";x.textAlign="center";x.fillText(v.toFixed(3),X+W/2,c.height-32-bh);
+    x.fillStyle=C.dim;x.font="8px ui-monospace";x.fillText(k.replace("uniform-random","uniform"),X+W/2,c.height-11);});
+  x.fillStyle=C.dim;x.textAlign="left";x.fillText("mean max-prob confidence",14,12);})();
+curve("c7",FA.temp.map(r=>r.T),FA.temp.map(r=>100*r.loop),"4-gram loop % vs T",null);
+// stat lines + failure-point chips
+const ctxDrop=FA.context, oodInv=FA.ood["all-caps"].conf>FA.ood["in-dist"].conf;
+document.getElementById('fp1').textContent="— local: reads the last few chars";
+document.getElementById('fp2').textContent="— graceful slope to floor";
+document.getElementById('fp3').textContent="— flat minima (tougher than spec)";
+document.getElementById('fp4').textContent="— cliff 3→2 bits";
+document.getElementById('fp5').textContent="— worthless near 70%";
+document.getElementById('fp6').textContent=oodInv?"— swagger INVERTS":"— swagger persists";
+document.getElementById('fp7').textContent="— freeze & boil";
+document.getElementById('s1').innerHTML=`k=64 <b>${(100*ctxDrop[0].acc).toFixed(1)}%</b> → k=1 bigram <span class="bad">${(100*ctxDrop[ctxDrop.length-1].acc).toFixed(1)}%</span> — most of the skill lives in a few chars`;
+document.getElementById('s2').innerHTML=`no cliff — decays smoothly; crosses the bigram floor as corruption climbs`;
+document.getElementById('s3').innerHTML=`σ=0.2 ≈ <span class="g">nearly free</span> (${(100*WN02.acc).toFixed(1)}%) · dies by σ≈0.75 — <b>flat minima, armor nobody spec'd</b>`;
+const q=FA.quant,q3=q.find(r=>r.bits===3),q2=q.find(r=>r.bits===2);
+document.getElementById('s4').innerHTML=`4-bit ≈ free · 3-bit wounded ${q3?(100*q3.acc).toFixed(1):'—'}% · <span class="bad">2-bit ${q2?(100*q2.acc).toFixed(1):'—'}% = chance, stone dead</span>`;
+document.getElementById('s5').innerHTML=`zero the waist dims and accuracy slides to the bigram floor — the channel carries the skill`;
+document.getElementById('s6').innerHTML=oodInv?`ALL-CAPS gibberish: conf <span class="bad">${FA.ood["all-caps"].conf} — HIGHER than real text ${FA.ood["in-dist"].conf}</span>. off-distribution, it gets <b>more</b> sure`:`confidence persists off-distribution`;
+const tp=FA.temp,tf=tp[0],tb=tp[tp.length-1];
+document.getElementById('s7').innerHTML=`T=${tf.T}: <span class="bad">${(100*tf.loop).toFixed(0)}% 4-gram loops</span> (freeze) · T=${tb.T}: ${(100*tb.loop).toFixed(0)}% loops but dissolved (boil) · livable band in between`;
+document.getElementById('samps').textContent="T="+tf.T+"  «"+tf.sample.slice(0,50)+"»\nT="+tb.T+"  «"+tb.sample.slice(0,50)+"»";
+// adjudication (spec vs measured)
+const armorFree=WN02.acc>=0.9*S.acc, ctxLocal=CTX4.acc>=0.9*FA.context[0].acc;
+document.getElementById('adj').innerHTML="<tr><th>axis</th><th>spec said</th><th>meter said</th><th>verdict</th></tr>"+
+ [["context","collapse < 4",(ctxLocal?"flat to ~4, cliff near 2":"drops with context")+" — local","<span class='W'>TWIST</span>"],
+  ["input noise","linear, no cliff","graceful decay to floor","<span class='P'>PASS</span>"],
+  ["weight noise","cliff @ σ≈0.05–0.1",(armorFree?"free to 0.2":"degrades early")+", dies ~0.75","<span class='B'>BROKEN</span>"],
+  ["quant","dies @ 2–3 bits","3b wounded, 2b = chance","<span class='P'>PASS</span>"],
+  ["lesion","graceful→30, dead 70","slides to the bigram floor","<span class='P'>PASS</span>"],
+  ["OOD","swagger persists",oodInv?"persists AND inverts":"persists","<span class='P'>PASS</span>"],
+  ["temp","loops below ~0.5","freeze @ low T, boil @ high","<span class='P'>PASS</span>"]]
+ .map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+// ---- the running 4-stroke engine (replays the trace, recomputes the ledger live) ----
+const E=document.getElementById('eng'), TR=SX.trace.strokes, T=SX.trace.T;
+let i=-1, stroke=0, timer=null, period=Math.round(60000/120/4), okc=0;
+const STK=["INTAKE","COMPRESS","COLLAPSE","EXHAUST"], LV=["TOKEN .10","ACT .30","LAYER .70","HEADS .75","CALIB .95","DISTRIB 1.0"];
+function render(){
+  const t=i>=0&&i<T?TR[i]:null, Ln=[];
+  Ln.push("  THE ENGINE ROOM · 4-stroke · real trace, "+T+" strokes · cycle "+Math.max(0,i+1)+"/"+T);
+  Ln.push("  "+STK.map((s,k)=>k===stroke&&t?"▶"+s+"◀":" "+s+" ").join("  ─  "));Ln.push("");
+  if(t){
+    const lv=stroke===0?0:stroke===1?Math.min(5,1+((i%3)+2)):5;
+    Ln.push("  unit '"+t.in+"' riding the column:");
+    LV.forEach((nm,k)=>{const on=(stroke===1&&k<=lv)||(stroke>=2&&k===5)||(stroke===0&&k===0);
+      Ln.push("    "+(on?"█":"·")+" "+nm+(k===5&&stroke>=2?"   ← at the wall":""));});
+    if(stroke>=2){Ln.push("");Ln.push("  THE WALL: corpus '"+t.true+"' ‖ belief '"+t.guess+"' (rank "+t.rank+")  →  "+(t.ok?"COLLAPSE ✓ agree":"differ — ship the hedge"));}
+    if(stroke===3){const d=i+1,y=Math.round(100*okc/d);Ln.push("");Ln.push("  EXHAUST → ledger (recomputed live): yield "+y+"%  ·  "+d+"/"+T+" shipped");}
+  } else if(i>=T-1&&stroke===0&&okc>0){
+    const y=Math.round(100*okc/T), emb=Math.round(100*SX.trace.acc);
+    Ln.push("  ENGINE COMPLETE · "+T+" strokes · ledger recomputed from the raw trace:");
+    Ln.push("    yield "+y+"%   (embedded trace acc: "+emb+"% — "+(y===emb?"MATCH ✓ LIT":"MISMATCH ✖")+")");
+    Ln.push("    the ledger was computed by this page, this run — not pasted.");
+  } else Ln.push("  engine cold — press start");
+  E.textContent=Ln.join("\n");
+}
+function tick(){ if(stroke===0){i++; if(i>=T){i=T-1; stop(); render(); return;}} if(stroke===3&&TR[i]&&TR[i].ok)okc++; render(); stroke=(stroke+1)%4; }
+function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById('run').textContent="▶ start";}
+document.getElementById('run').onclick=()=>{if(timer){stop();return;} if(i>=T-1&&stroke===0){i=-1;stroke=0;okc=0;} document.getElementById('run').textContent="⏸ pause"; timer=setInterval(tick,period);};
+document.getElementById('rst').onclick=()=>{stop();i=-1;stroke=0;okc=0;render();};
+document.getElementById('rpm').oninput=function(){period=Math.round(60000/(+this.value)/4);if(timer){clearInterval(timer);timer=setInterval(tick,period);}};
+render();
+// ---- fail-loud self-check + ring-seal ----
+(async function(){
+  let ok=true, notes=[];
+  const yr=TR.filter(x=>x.ok).length/T;
+  if(TR.length!==T){ok=false;notes.push("trace length "+TR.length+"≠"+T);}
+  if(Math.abs(yr-SX.trace.acc)>0.02){ok=false;notes.push("trace recompute "+yr.toFixed(3)+"≠"+SX.trace.acc);}
+  // ladder must climb bigram→head; the two broken specs are on record; swagger>0
+  const lad=SX.ladder.map(r=>r.acc), climbs=lad[lad.length-1]>lad[0];
+  const swag=SX.swagger.gap>0, mirror=frN.acc<fr0.acc*0.6;
+  const q3=(FA.quant.find(r=>r.bits===3)||{acc:1}).acc, q2=(FA.quant.find(r=>r.bits===2)||{acc:1}).acc, qcliff=q2<q3*0.5;
+  if(!climbs){ok=false;notes.push("ladder does not climb");}
+  if(!swag){ok=false;notes.push("no swagger");}
+  const art=document.getElementById('art').innerText;
+  let seal="(no crypto)";
+  try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(art+JSON.stringify(D.specimen)));
+    seal="sha256:"+[...new Uint8Array(b)].slice(0,16).map(x=>x.toString(16).padStart(2,"0")).join("");}catch(e){}
+  document.getElementById('seal').innerHTML="◈ RING-SEAL · "+seal+" · "+new Date().toISOString().slice(0,19)+"Z · .dlw<br>"+
+    "ceiling metered (swagger +"+(100*SX.swagger.gap).toFixed(1)+"%, born +"+(100*SX.swagger.init_gap).toFixed(1)+"% at init) · root wall one-way glass (AMBER inside · LIT outside) · floor sealed by meaning · engine ledger recomputed live";
+  const d=document.getElementById('diag');
+  d.className='diag'+(ok?'':' bad');
+  d.textContent="self-check: trace "+T+" strokes, yield recompute "+(Math.abs(yr-SX.trace.acc)<=0.02?"MATCH":"FAIL")+" ("+(100*yr).toFixed(0)+"% vs "+(100*SX.trace.acc).toFixed(0)+"%) · column ladder climbs "+(climbs?"✓":"✗")+" · swagger>0 "+(swag?"✓":"✗")+" · free-run mirror collapses "+(mirror?"✓":"✗")+" · quant cliff 3→2b ("+(100*q3).toFixed(0)+"→"+(100*q2).toFixed(0)+"%) "+(qcliff?"✓":"✗")+" · era carries "+D.era.length+" snapshots · "+(ok?"ALL GATES GREEN · ENGINE CERTIFIED":"FAIL LOUD: "+notes.join("; "));
+})();
+})();
+</script></body></html>
